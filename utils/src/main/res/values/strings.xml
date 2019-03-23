@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">utils</string>
+    <string name="qr_scan_hint">将二维码放入框内,即可完成自动扫描</string>
+</resources>
