@@ -2,7 +2,22 @@ ANDROID_UTILS
 ======
 
 # 使用
-* <H3>compile 'com.zmp.zhanpple:utils:1.0.3'</H3>
+```
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+
+
+    dependencies {
+            implementation 'com.github.zhanpple:utils:-SNAPSHOT'
+    }
+
+```
+
+* <H3>implementation 'com.github.zhanpple:utils:-SNAPSHOT'</H3>
 
 ## 打印类名 方法 行号的[logger源码](https://github.com/zhanpple/utils/tree/master/utils/src/main/java/com/zmp/utils/Logger.java)
 ### 用法
