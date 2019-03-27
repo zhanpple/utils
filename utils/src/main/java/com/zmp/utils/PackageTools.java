@@ -8,7 +8,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ServiceInfo;
-import android.graphics.drawable.Drawable;
 import android.text.format.Formatter;
 
 import com.zmp.utils.bean.MyPackageInfo;
@@ -19,6 +18,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @author zmp
+ */
 public class PackageTools {
 
         /***
@@ -34,13 +36,11 @@ public class PackageTools {
                 for (PackageInfo info : list) {
                         ApplicationInfo app = info.applicationInfo;
                         String appName = app.loadLabel(pm).toString();
-                        Drawable loadIcon = app.loadIcon(pm);
                         long length = new File(app.sourceDir).length();
                         String fileSize = Formatter.formatFileSize(context, length);
-                        Boolean isSd = (app.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) != 0;
                         Boolean isSys = (app.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
-                        MyPackageInfo myPackageInfo = new MyPackageInfo(loadIcon,
-                                app.packageName, appName, fileSize, isSys);
+                        Boolean isSd = (app.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) != 0;
+                        MyPackageInfo myPackageInfo = new MyPackageInfo(app.packageName, appName, fileSize, isSys, isSd);
                         myList.add(myPackageInfo);
                 }
                 return myList;
@@ -49,8 +49,8 @@ public class PackageTools {
         /**
          * 获取所有正在运行的进程
          *
-         * @param context
-         * @return
+         * @param context context
+         * @return getProgress
          */
         public static List<MyPackageInfo> getProgress(Context context) {
                 List<MyPackageInfo> list = new ArrayList<>();
@@ -60,24 +60,25 @@ public class PackageTools {
                 List<ActivityManager.RunningAppProcessInfo> runList = am.getRunningAppProcesses();
                 for (ActivityManager.RunningAppProcessInfo runInfo : runList) {
                         String packageName = runInfo.pkgList[0];
-                        ApplicationInfo Appinfo = null;
+                        ApplicationInfo appinfo = null;
                         try {
-                                Appinfo = pm.getApplicationInfo(packageName,
-                                                                PackageManager.GET_UNINSTALLED_PACKAGES);
-                        }
-                        catch (PackageManager.NameNotFoundException e) {
+                                appinfo = pm.getApplicationInfo(packageName,
+                                        PackageManager.GET_UNINSTALLED_PACKAGES);
+                        } catch (PackageManager.NameNotFoundException e) {
                                 // TODO Auto-generated catch block
                                 e.printStackTrace();
                         }
-                        if (Appinfo != null) {
-                                Drawable image = Appinfo.loadIcon(pm);
-                                String appName = Appinfo.loadLabel(pm).toString();
-                                int[] pids = new int[]{runInfo.pid};
-                                android.os.Debug.MemoryInfo[] processMemoryInfo = am.getProcessMemoryInfo(pids); //获取某个进程的内存信息
-                                int totalMemory = processMemoryInfo[0].getTotalPrivateDirty();//获取进程所使用总内存
+                        if (appinfo != null) {
+                                String appName = appinfo.loadLabel(pm).toString();
+                                int[] pidS = new int[]{runInfo.pid};
+                                //获取某个进程的内存信息
+                                android.os.Debug.MemoryInfo[] processMemoryInfo = am.getProcessMemoryInfo(pidS);
+                                //获取进程所使用总内存
+                                int totalMemory = processMemoryInfo[0].getTotalPrivateDirty();
                                 String memory = Formatter.formatFileSize(context, totalMemory);
-                                boolean isSys = (Appinfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
-                                MyPackageInfo myPackageInfo = new MyPackageInfo(image, packageName, appName, memory, isSys);
+                                Boolean isSd = (appinfo.flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) != 0;
+                                boolean isSys = (appinfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0;
+                                MyPackageInfo myPackageInfo = new MyPackageInfo(packageName, appName, memory, isSys, isSd);
                                 list.add(myPackageInfo);
                         }
                 }
@@ -87,16 +88,16 @@ public class PackageTools {
         /**
          * 获取手机总共可用的进程数
          *
-         * @return
+         * @return getTotalAvailProcNum
          */
         public static int getTotalAvailProcNum(Context ctx) {
                 // step 1 . 获取所有安装的应用
                 PackageManager pm = ctx.getPackageManager();
                 List<PackageInfo> installedPackages = pm.getInstalledPackages(
                         PackageManager.GET_SERVICES
-                        | PackageManager.GET_PROVIDERS
-                        | PackageManager.GET_RECEIVERS
-                        | PackageManager.GET_ACTIVITIES);
+                                | PackageManager.GET_PROVIDERS
+                                | PackageManager.GET_RECEIVERS
+                                | PackageManager.GET_ACTIVITIES);
                 // step 2 . 遍历所有安装的应用程序，统计每一个程序的可产生的进程数
                 int count = 0;
                 for (PackageInfo info : installedPackages) {
@@ -140,8 +141,8 @@ public class PackageTools {
         /**
          * 获取手机运行内存   outInfo.totalMem总内存    outInfo.availMem可用内存
          *
-         * @param context
-         * @return
+         * @param context context
+         * @return getTotalMemNum
          */
         public static long getTotalMemNum(Context context) {
                 //ActivityManager
